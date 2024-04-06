@@ -22,7 +22,6 @@ first_weekday = 0
 for i in cal.itermonthdays2(2024, 4):
     first_weekday = i[1] + 1  # пн - 1, вт - 2
     break
-print(first_weekday)
 buttons_arr = []
 for i in range(0, first_weekday):
     buttons_arr.append(types.InlineKeyboardButton(' ', callback_data='x'))
