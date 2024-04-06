@@ -3,6 +3,7 @@ from telebot import types
 import config
 import pytz
 import datetime
+
 """import datetime
 import pytz
 import telebot
@@ -64,37 +65,49 @@ cal.add(types.InlineKeyboardButton('<--', callback_data=f'prev_{1}'))
 
 print(cal.to_dict()['inline_keyboard'][13]['callback_data'])"""
 
+
 def calendar():
     current_day = datetime.datetime.now(pytz.timezone('Europe/Moscow'))
     print(current_day)
+def enter_city(message):
+    try:
+        config.cities[message.text.capitalize()]
+    except:
+        BOT.send_message(message.chat.id, text='Город не найден')
+
 def main():
-    @BOT.message_handler(content_types=['text'], commands=['start'])
+    @BOT.message_handler(commands=['start'])
     def message_handler(message):
-        BOT.send_message(message.chat.id, text='Привет! Чтобы найти великолепный тур, нажмите на кнопку ниже',
-                         reply_markup=start_mk)
+        mdict.update({message.chat.id: BOT.send_message(message.chat.id, text='Привет! Нажми на одну из кнопок ниже',
+                                                        reply_markup=start_mk)})
 
-
-    @BOT.callback_query_handler(func = lambda call: True)
+    @BOT.callback_query_handler(func=lambda call: True)
     def callback_query_handler(call):
         if call.data == 'start':
-            BOT.send_message(call.message.chat.id, text='Выберите город вылета', reply_markup=city_dep)
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите город вылета',
+                                                                 reply_markup=city_dep)})
         if 'dep' in call.data:
             if 'nocity' in call.data:
-                pass #TODO
-            elif 'other' in call.data: pass
-
+                BOT.delete_message(call.message.chat.id, mdict[call.message.chat.id])
+                BOT.send_message(call.message.chat.id, text='Без перелета')
+            elif 'other' in call.data:
+                BOT.delete_message(call.message.chat.id, mdict[call.message.chat.id])
+                BOT.send_message(call.message.chat.id, text='Введите желаемый город вылета')
+                BOT.register_next_step_handler(call.message, enter_city)
 
     BOT.infinity_polling()
 
 
 if __name__ == '__main__':
+    mdict = dict()
     BOT = telebot.TeleBot(token=config.token)
     start_mk = types.InlineKeyboardMarkup(row_width=1)
     start_mk.add(types.InlineKeyboardButton('Найти тур!', callback_data='start'))
     city_dep = types.InlineKeyboardMarkup(row_width=2)
-    city_dep.add(types.InlineKeyboardButton('Москва', callback_data='dep_Msc'),
-                 types.InlineKeyboardButton('Екатеринбург', callback_data='dep_Ekb'),
+    city_dep.add(types.InlineKeyboardButton('Москва', callback_data='dep_Msc'))
+    city_dep.add(types.InlineKeyboardButton('Екатеринбург', callback_data='dep_Ekb'),
                  types.InlineKeyboardButton('Новосибирск', callback_data='dep_Nsb'),
-                 types.InlineKeyboardButton('Санкт-Петербург', callback_data='dep_Spb'),
-                 types.InlineKeyboardButton('Другой город', callback_data='dep_other'),
+                 types.InlineKeyboardButton('Санкт-Петербург', callback_data='dep_Spb'))
+    city_dep.add(types.InlineKeyboardButton('Другой город', callback_data='dep_other'),
                  types.InlineKeyboardButton('Без перелета', callback_data='dep_nocity'))
+    main()
