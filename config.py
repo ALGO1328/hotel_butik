@@ -135,3 +135,4 @@ month_desc = {'1': 'Январь',
               '10': 'Октябрь',
               '11': 'Ноябрь',
               '12': 'Декабрь'}
+cities_swap = {v: k for k, v in cities.items()}

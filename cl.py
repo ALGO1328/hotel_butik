@@ -1,6 +1,3 @@
-import telebot
-import datetime
-from telebot import TeleBot
 import calendar
 from telebot import types
 from config import month_desc
