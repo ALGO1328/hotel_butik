@@ -67,13 +67,20 @@ def main():
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите город вылета',
                                                                  reply_markup=city_dep)})
         if 'arr' in call.data:
-            stags[call.message.chat.id].update({'s_country': config.countries[call.data.replace('arr_', '')]})
-            BOT.delete_message(call.message.chat.id, mdict[call.message.chat.id].id)
+            stags[call.message.chat.id].update({'s_country': call.data.replace('arr_', '')})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text=f'Страна вылета: '
+                                                                      f'{config.countries_swap[call.data.replace("arr_", "")]}')})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
                                                                  text='Введите количество взрослых туристов',
                                                                  reply_markup=tourist_amount)})
         if 'tourist' in call.data:
             stags[call.message.chat.id].update({'s_adults': call.data.replace('tourists_', '')})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text=f'Кол-во туристов: '
+                                                                                            f'{call.data.replace('tourists_', '')}')})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите кол-во детей, '
+                                                                                            'едущих с вами в '
+                                                                                            'путешествие')})
         if 'dep' in call.data:
             if 'nocity' in call.data:
                 mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Без перелета')})
@@ -118,5 +125,11 @@ if __name__ == '__main__':
                        types.InlineKeyboardButton('👤👤👤👤👤', callback_data='tourist_5'),
                        types.InlineKeyboardButton('👤👤👤👤👤👤', callback_data='tourist_6'),
                        types.InlineKeyboardButton('НАЗАД', callback_data='backto_country'))
+    children_amount = types.InlineKeyboardMarkup(row_width=3)
+    children_amount.add(types.InlineKeyboardButton('БЕЗ ДЕТЕЙ', callback_data='children_0'))
+    children_amount.add(types.InlineKeyboardButton('🧒', callback_data='children_1'),
+                        types.InlineKeyboardButton('🧒🧒', callback_data='children_2'),
+                        types.InlineKeyboardButton('🧒🧒🧒', callback_data='children_3'))
+    children_amount.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_adults'))
 
     main()
