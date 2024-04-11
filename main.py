@@ -66,6 +66,8 @@ def main():
         if call.data == 'start':
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите город вылета',
                                                                  reply_markup=city_dep)})
+        if 'hotel' in call.data:
+            stags[call.message.chat.id].update({'MISSING ARGUEMENT': call.data[-1:]}) #TODO
         if 'arr' in call.data:
             stags[call.message.chat.id].update({'s_country': call.data.replace('arr_', '')})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
@@ -74,10 +76,17 @@ def main():
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
                                                                  text='Введите количество взрослых туристов',
                                                                  reply_markup=tourist_amount)})
+        if 'children' in call.data:
+            stags[call.message.chat.id].update({'s_children': call.data[-1:]})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text=f'Кол-во детей: '
+                                                                                            f'{call.data[-1:]}')})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text='Выберите минимальную категорию отеля',
+                                                                 reply_markup=hotel_category)})
         if 'tourist' in call.data:
-            stags[call.message.chat.id].update({'s_adults': call.data.replace('tourists_', '')})
+            stags[call.message.chat.id].update({'s_adults': call.data[-1:]})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text=f'Кол-во туристов: '
-                                                                                            f'{call.data.replace('tourists_', '')}')})
+                                                                                            f'{call.data[-1:]}')})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите кол-во детей, '
                                                                                             'едущих с вами в '
                                                                                             'путешествие')})
@@ -131,5 +140,12 @@ if __name__ == '__main__':
                         types.InlineKeyboardButton('🧒🧒', callback_data='children_2'),
                         types.InlineKeyboardButton('🧒🧒🧒', callback_data='children_3'))
     children_amount.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_adults'))
+    hotel_category = types.InlineKeyboardMarkup(row_width=3)
+    hotel_category.add(types.InlineKeyboardButton('⭐', callback_data='hotel_1'),
+                       types.InlineKeyboardButton('⭐⭐', callback_data='hotel_2'),
+                       types.InlineKeyboardButton('⭐⭐⭐', callback_data='hotel_3'),
+                       types.InlineKeyboardButton('⭐⭐⭐⭐', callback_data='hotel_4'),
+                       types.InlineKeyboardButton('⭐⭐⭐⭐⭐', callback_data='hotel_5'))
+    hotel_category.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_child'))
 
     main()
