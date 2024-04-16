@@ -66,8 +66,20 @@ def main():
         if call.data == 'start':
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите город вылета',
                                                                  reply_markup=city_dep)})
+        if 'meal' in call.data:
+            stags[call.message.chat.id].update({'s_meal': call.data[-1:]})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text=f'Питание: {config.meals[call.data]}')})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text='Выберите питание',
+                                                                 reply_markup=meal_markup)})
         if 'hotel' in call.data:
-            stags[call.message.chat.id].update({'MISSING ARGUEMENT': call.data[-1:]}) #TODO
+            stags[call.message.chat.id].update({'s_stars': call.data[-1:]})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text=f'Категория отеля: {call.data[-1:]}')})
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text='Выберите питание',
+                                                                 reply_markup=meal_markup)})
         if 'arr' in call.data:
             stags[call.message.chat.id].update({'s_country': call.data.replace('arr_', '')})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
@@ -89,7 +101,8 @@ def main():
                                                                                             f'{call.data[-1:]}')})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите кол-во детей, '
                                                                                             'едущих с вами в '
-                                                                                            'путешествие')})
+                                                                                            'путешествие',
+                                                                 reply_markup=children_amount)})
         if 'dep' in call.data:
             if 'nocity' in call.data:
                 mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Без перелета')})
@@ -146,6 +159,20 @@ if __name__ == '__main__':
                        types.InlineKeyboardButton('⭐⭐⭐', callback_data='hotel_3'),
                        types.InlineKeyboardButton('⭐⭐⭐⭐', callback_data='hotel_4'),
                        types.InlineKeyboardButton('⭐⭐⭐⭐⭐', callback_data='hotel_5'))
-    hotel_category.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_child'))
+    hotel_category.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_children'))
+    meal_markup = types.InlineKeyboardMarkup(row_width=2)
+    meal_markup.add(types.InlineKeyboardButton('Любое', callback_data='meal_0'),
+                    types.InlineKeyboardButton('Завтрак', callback_data='meal_3'),
+                    types.InlineKeyboardButton('Завтрак и ужин', callback_data='meal_4'),
+                    types.InlineKeyboardButton('Полный пансион', callback_data='meal_5'),
+                    types.InlineKeyboardButton('Все включено', callback_data='meal_7'),
+                    types.InlineKeyboardButton('Ультра все включено', callback_data='meal_9'),
+                    types.InlineKeyboardButton('НАЗАД', callback_data='backto_hotel'))
+    nights_markup = types.InlineKeyboardMarkup(row_width=3)
+    nights_markup.add(types.InlineKeyboardButton('6 - 8', callback_data='nights_6'),
+                      types.InlineKeyboardButton('9 - 11', callback_data='nights_9'),
+                      types.InlineKeyboardButton('12 - 14', callback_data='nights_12'),
+                      types.InlineKeyboardButton('НАЗАД', callback_data='backto_meal'))
+
 
     main()
