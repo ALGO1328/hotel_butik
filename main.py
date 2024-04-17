@@ -1,11 +1,28 @@
 import telebot
 from telebot import types
-import config
 import pytz
 import datetime
+from datetime import date
+
+import cl
+import config
 
 
 def main():
+    def checker(message):
+        try:
+            new_message = ('✈️ Из города ' + config.cities_swap[stags[message.chat.id]['s_flyfrom']] + 'В страну ' +
+                           config.countries_swap[stags[message.chat.id]['s_country']])
+        except:
+            new_message = '✈️ Без перелета'
+        new_message += '👤 Взрослых: ' + stags[message.chat.id]['s_adults']
+        new_message += '👶 Детей: ' + stags[message.chat.id]['s_children']
+        new_message += '🏠 Отель: ' + stags[message.chat.id]['s_stars'] + '* и лучше'
+        new_message += '🍔 Питание: ' + config.meals[stags[message.chat.id]['s_meal']]
+        new_message += '🌙' + stags[message.chat.id]['s_nights'] + str(int(stags[message.chat.id]['s_nights']) + 2)
+        new_message += '📆 Даты вылета с ' + stags[message.chat.id]['s_j_date_from']
+        return new_message
+
     def enter_city(message):
         BOT.delete_message(message.chat.id, message.message_id)
         if message.text.lower() == 'отмена':
@@ -54,7 +71,8 @@ def main():
             stags.update({message.chat.id: dict()})
             BOT.delete_message(chat_id=message.chat.id, message_id=message.message_id)
             mdict.update(
-                {message.chat.id: BOT.send_message(message.chat.id, text='Привет! Нажми на одну из кнопок ниже',
+                {message.chat.id: BOT.send_message(message.chat.id, text=f'Привет, {message.from_user.first_name}!'
+                                                                         f' Нажми на одну из кнопок ниже',
                                                    reply_markup=start_mk)})
 
     @BOT.callback_query_handler(func=lambda call: True)
@@ -66,13 +84,49 @@ def main():
         if call.data == 'start':
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id, text='Выберите город вылета',
                                                                  reply_markup=city_dep)})
+        if 'nights' in call.data:
+            if '12' in call.data:
+                stags[call.message.chat.id].update({'s_nights_from': call.data[-2:]})
+                nights_to = str(int(call.data[-2:]) + 2)
+                stags[call.message.chat.id].update({'s_nights_to': nights_to})
+                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                     text=f'Кол-во ночей: {call.data[-2:]} - {nights_to}')})
+            else:
+                stags[call.message.chat.id].update({'s_nights_from': call.data[-1:]})
+                nights_to = str(int(call.data[-1:]) + 2)
+                stags[call.message.chat.id].update({'s_nights_to': nights_to})
+                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                     text=f'Кол-во ночей: {call.data[-1]} - {nights_to}')})
+            year_now = date.today().year
+            month_now = date.today().month
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text='Выберите примерную дату вылета',
+                                                                 reply_markup=cl.create_cal(year_now, month_now))})
+        if 'date' in call.data:
+            if 'change' in call.data:
+                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                     text='Выберите примерную дату вылета',
+                                                                     reply_markup=cl.create_cal(call.data[12:16],
+                                                                                                call.data[-2:]))})
+                print(call.data[12:16])
+                print(call.data[-2:])
+            else:
+                stags[call.message.chat.id].update({'s_j_date_from': call.data[-2:]})
+                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                     text=f'Примерная дата вылета: {call.data[5:]}')})
+                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                     text='Давайте проверим, верно ли мы все записали')})
+                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                     text=checker(call.message))})
+
+
         if 'meal' in call.data:
             stags[call.message.chat.id].update({'s_meal': call.data[-1:]})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
-                                                                 text=f'Питание: {config.meals[call.data]}')})
+                                                                 text=f'Питание: {config.meals[call.data[-1:]]}')})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
-                                                                 text='Выберите питание',
-                                                                 reply_markup=meal_markup)})
+                                                                 text='Выберите количество ночей',
+                                                                 reply_markup=nights_markup)})
         if 'hotel' in call.data:
             stags[call.message.chat.id].update({'s_stars': call.data[-1:]})
             mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,

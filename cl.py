@@ -1,14 +1,20 @@
 import calendar
+
 from telebot import types
+
 from config import month_desc
 
 
 def create_cal(year, month):
+    year = int(year)
+    month = int(month)
     cal = calendar.Calendar()
-    monthiter = cal.itermonthdays(2024, 4)
+    monthiter = cal.itermonthdays(year, month)
     daysset = set()
+
     for elem in monthiter:
         daysset.add(elem)
+
     monthrange = max(daysset)
     markup_calendar = types.InlineKeyboardMarkup(row_width=7)
     markup_calendar.add(types.InlineKeyboardButton(text='Пн', callback_data='x'),
@@ -20,22 +26,42 @@ def create_cal(year, month):
                         types.InlineKeyboardButton(text='Вс', callback_data='x'))
     first_weekday = 0
     button_counter = 0
+
     for i in cal.itermonthdays2(year, month):
-        first_weekday = i[1] + 1  # пн - 1, вт - 2
+        first_weekday = i[1] + 1  # пн - 1, вт - 2, ...
         break
     buttons_arr = list()
+
     if first_weekday > 1:
         for i in range(0, first_weekday):
             buttons_arr.append(types.InlineKeyboardButton(' ', callback_data='x'))
             button_counter += 1
+
     for i in range(1, int(calendar.monthrange(year, month)[1]) + 1):
-        buttons_arr.append(types.InlineKeyboardButton(f'{i}', callback_data=f'{i}.{month}.{year}'))
+        buttons_arr.append(types.InlineKeyboardButton(f'{i}', callback_data=f'date_{i}.{month}.{year}'))
         button_counter += 1
+
     while button_counter < 35:
         buttons_arr.append(types.InlineKeyboardButton(' ', callback_data='x'))
         button_counter += 1
+
+    n_month = str((month + 1) % 12).rjust(2, '0')
+    if n_month == '0':
+        n_month = '12'
+    n_year = str(year)
+    if n_month == '01':
+        n_year = str(year + 1)
+
+    p_month = str((month - 1) % 12).rjust(2, '0')
+    if p_month == '0':
+        p_month = '12'
+    p_year = str(year)
+    if p_month == '00':
+        p_month = '01'
+        p_year = str(year - 1)
+
     markup_calendar.add(*buttons_arr)
-    markup_calendar.add(types.InlineKeyboardButton('<--', callback_data=f'prev_{month}'),
+    markup_calendar.add(types.InlineKeyboardButton('<--', callback_data=f'date_change_{p_year}_{p_month}'),
                         types.InlineKeyboardButton(f'{month_desc[str(month)]} {year}', callback_data='x'),
-                        types.InlineKeyboardButton('-->', callback_data=f'next_{month}'))
+                        types.InlineKeyboardButton('-->', callback_data=f'date_change_{n_year}_{n_month}'))
     return markup_calendar
