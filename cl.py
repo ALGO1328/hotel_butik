@@ -24,16 +24,18 @@ def create_cal(year, month):
                         types.InlineKeyboardButton(text='Пт', callback_data='x'),
                         types.InlineKeyboardButton(text='Сб', callback_data='x'),
                         types.InlineKeyboardButton(text='Вс', callback_data='x'))
-    first_weekday = 0
+    empty_counter = 0
     button_counter = 0
 
-    for i in cal.itermonthdays2(year, month):
-        first_weekday = i[1] + 1  # пн - 1, вт - 2, ...
-        break
+    for i in cal.itermonthdays(year, month):
+        if i != 1:
+            empty_counter += 1
+        else:
+            break
     buttons_arr = list()
 
-    if first_weekday > 1:
-        for i in range(0, first_weekday):
+    if empty_counter > 1:
+        for i in range(0, empty_counter):
             buttons_arr.append(types.InlineKeyboardButton(' ', callback_data='x'))
             button_counter += 1
 
@@ -66,3 +68,4 @@ def create_cal(year, month):
                         types.InlineKeyboardButton('-->', callback_data=f'date_change_{n_year}_{n_month}'))
 
     return markup_calendar
+create_cal(2024, 5)
