@@ -1,6 +1,5 @@
 import telebot
 from telebot import types
-import pytz
 import datetime
 from datetime import date
 
@@ -9,18 +8,24 @@ import config
 
 
 def main():
+    def datecheck(c_date):
+        now = datetime.datetime.now()
+        print(c_date)
+        print(now)
+
     def checker(message):
         try:
             new_message = ('✈️ Из города ' + config.cities_swap[stags[message.chat.id]['s_flyfrom']] + 'В страну ' +
                            config.countries_swap[stags[message.chat.id]['s_country']])
         except:
-            new_message = '✈️ Без перелета'
-        new_message += '👤 Взрослых: ' + stags[message.chat.id]['s_adults']
-        new_message += '👶 Детей: ' + stags[message.chat.id]['s_children']
-        new_message += '🏠 Отель: ' + stags[message.chat.id]['s_stars'] + '* и лучше'
-        new_message += '🍔 Питание: ' + config.meals[stags[message.chat.id]['s_meal']]
-        new_message += '🌙' + stags[message.chat.id]['s_nights'] + str(int(stags[message.chat.id]['s_nights']) + 2)
-        new_message += '📆 Даты вылета с ' + stags[message.chat.id]['s_j_date_from']
+            new_message = '✈️ Без перелета \n'
+        new_message += '👤 Взрослых: ' + stags[message.chat.id]['s_adults'] + ' \n'
+        new_message += '👶 Детей: ' + stags[message.chat.id]['s_children'] + ' \n'
+        new_message += '🏠 Отель: ' + stags[message.chat.id]['s_stars'] + '* и лучше' + ' \n'
+        new_message += '🍔 Питание: ' + config.meals[stags[message.chat.id]['s_meal']] + ' \n'
+        new_message += '🌙' + stags[message.chat.id]['s_nights_from'] + str(
+            int(stags[message.chat.id]['s_nights_from']) + 2) + ' \n'
+        new_message += '📆 Даты вылета с ' + stags[message.chat.id]['s_j_date_from'] + ' \n'
         return new_message
 
     def enter_city(message):
@@ -38,8 +43,9 @@ def main():
                                                                 text=f'Город вылета: {message.text.capitalize()}')})
                 enter_country(message)
             except KeyError:
-                mdict.update({message.chat.id: BOT.send_message(message.chat.id, text='Город не найден. '
-                                                                                      'Попробуйте еще раз или напишите "отмена" для отмены')})
+                mdict.update({message.chat.id: BOT.send_message(message.chat.id, text='Город не найден. \n'
+                                                                                      'Нажмите "отмена" для отмены',
+                                                                reply_markup=manual_city_markup)})
                 BOT.register_next_step_handler(message, enter_city)
 
     def get_country(message):
@@ -60,6 +66,19 @@ def main():
                                                         text='Выберите страну, в которой хотите отдохнуть',
                                                         reply_markup=country_arr)})
         BOT.register_next_step_handler(message, get_country)
+
+    def link_creator(message):
+        link = 'https://tourvisor.ru/search.php?ts_dosearch=1'
+        for k, v in stags[message.chat.id].items():
+            link += f'&{k}={v}'
+        return link
+
+    def phone_checker(message):
+        BOT.delete_message(message.chat.id, mdict[message.chat.id].id)
+        if message.text.startswith('+7') and len(message.text) == 12:
+            link = link_creator(message)
+            text = f'[Ссылка]({link})'
+            BOT.send_message(message.chat.id, text=f'Результаты поиска: {text}', parse_mode='MarkdownV2')
 
     @BOT.message_handler(commands=['start'])
     def message_handler(message):
@@ -108,17 +127,27 @@ def main():
                                                                      text='Выберите примерную дату вылета',
                                                                      reply_markup=cl.create_cal(call.data[12:16],
                                                                                                 call.data[-2:]))})
-                print(call.data[12:16])
-                print(call.data[-2:])
             else:
-                stags[call.message.chat.id].update({'s_j_date_from': call.data[-2:]})
-                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
-                                                                     text=f'Примерная дата вылета: {call.data[5:]}')})
-                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
-                                                                     text='Давайте проверим, верно ли мы все записали')})
-                mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
-                                                                     text=checker(call.message))})
+                if datecheck(call.data.remove('date_')):
+                    stags[call.message.chat.id].update({'s_j_date_from': call.data[-2:]})
+                    mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                         text=f'Примерная дата вылета: {call.data[5:]}')})
+                    mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                         text='Давайте проверим, верно ли мы все записали')})
+                    mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                         text=checker(call.message))})
+                else:
+                    mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                         text='Выберите корректную дату')})
 
+        if 'confirm' in call.data:
+            mdict.update({call.message.chat.id: BOT.send_message(call.message.chat.id,
+                                                                 text='Введите свой номер телефона в формате +79000000000.'
+                                                                      'и мы прямо сейчас отправим Вам результаты поиска. \n'
+                                                                      'Также наш специалист подготовит для Вас индивидуальное предложение '
+                                                                      'по заданным параметрам и свяжется с Вами по указанному номеру телефона. \n'
+                                                                      'Указывая номер телефона, Вы подтверждаете согласие на обработку своих персональных данных.')})
+            BOT.register_next_step_handler(call.message, phone_checker)
 
         if 'meal' in call.data:
             stags[call.message.chat.id].update({'s_meal': call.data[-1:]})
@@ -199,34 +228,32 @@ if __name__ == '__main__':
                        types.InlineKeyboardButton('👤👤👤', callback_data='tourist_3'),
                        types.InlineKeyboardButton('👤👤👤👤', callback_data='tourist_4'),
                        types.InlineKeyboardButton('👤👤👤👤👤', callback_data='tourist_5'),
-                       types.InlineKeyboardButton('👤👤👤👤👤👤', callback_data='tourist_6'),
-                       types.InlineKeyboardButton('НАЗАД', callback_data='backto_country'))
+                       types.InlineKeyboardButton('👤👤👤👤👤👤', callback_data='tourist_6'))
     children_amount = types.InlineKeyboardMarkup(row_width=3)
     children_amount.add(types.InlineKeyboardButton('БЕЗ ДЕТЕЙ', callback_data='children_0'))
     children_amount.add(types.InlineKeyboardButton('🧒', callback_data='children_1'),
                         types.InlineKeyboardButton('🧒🧒', callback_data='children_2'),
                         types.InlineKeyboardButton('🧒🧒🧒', callback_data='children_3'))
-    children_amount.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_adults'))
     hotel_category = types.InlineKeyboardMarkup(row_width=3)
     hotel_category.add(types.InlineKeyboardButton('⭐', callback_data='hotel_1'),
                        types.InlineKeyboardButton('⭐⭐', callback_data='hotel_2'),
                        types.InlineKeyboardButton('⭐⭐⭐', callback_data='hotel_3'),
                        types.InlineKeyboardButton('⭐⭐⭐⭐', callback_data='hotel_4'),
                        types.InlineKeyboardButton('⭐⭐⭐⭐⭐', callback_data='hotel_5'))
-    hotel_category.add(types.InlineKeyboardButton('НАЗАД', callback_data='backto_children'))
     meal_markup = types.InlineKeyboardMarkup(row_width=2)
-    meal_markup.add(types.InlineKeyboardButton('Любое', callback_data='meal_0'),
-                    types.InlineKeyboardButton('Завтрак', callback_data='meal_3'),
-                    types.InlineKeyboardButton('Завтрак и ужин', callback_data='meal_4'),
-                    types.InlineKeyboardButton('Полный пансион', callback_data='meal_5'),
-                    types.InlineKeyboardButton('Все включено', callback_data='meal_7'),
-                    types.InlineKeyboardButton('Ультра все включено', callback_data='meal_9'),
-                    types.InlineKeyboardButton('НАЗАД', callback_data='backto_hotel'))
+    meal_markup.add(types.InlineKeyboardButton('ЛЮБОЕ', callback_data='meal_0'),
+                    types.InlineKeyboardButton('ЗАВТРАК', callback_data='meal_3'),
+                    types.InlineKeyboardButton('ЗАВТРАК', callback_data='meal_4'),
+                    types.InlineKeyboardButton('ПОЛНЫЙ ПАНСИОН', callback_data='meal_5'),
+                    types.InlineKeyboardButton('ВСЕ ВКЛЮЧЕНО', callback_data='meal_7'),
+                    types.InlineKeyboardButton('УЛЬТРА ВСЕ ВКЛЮЧЕНО', callback_data='meal_9'))
     nights_markup = types.InlineKeyboardMarkup(row_width=3)
     nights_markup.add(types.InlineKeyboardButton('6 - 8', callback_data='nights_6'),
                       types.InlineKeyboardButton('9 - 11', callback_data='nights_9'),
-                      types.InlineKeyboardButton('12 - 14', callback_data='nights_12'),
-                      types.InlineKeyboardButton('НАЗАД', callback_data='backto_meal'))
-
-
+                      types.InlineKeyboardButton('12 - 14', callback_data='nights_12'))
+    confirmation_markup = types.InlineKeyboardMarkup(row_width=1)
+    confirmation_markup.add(types.InlineKeyboardButton('ВСЕ ВЕРНО, ПОДТВЕРДИТЬ', callback_data='confirm_confirm'),
+                            types.InlineKeyboardButton('ИЗМЕНИТЬ', callback_data='start'))
+    manual_city_markup = types.InlineKeyboardMarkup(row_width=1)
+    manual_city_markup.add(types.InlineKeyboardButton('ОТМЕНА', callback_data='start'))
     main()

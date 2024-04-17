@@ -38,7 +38,8 @@ def create_cal(year, month):
             button_counter += 1
 
     for i in range(1, int(calendar.monthrange(year, month)[1]) + 1):
-        buttons_arr.append(types.InlineKeyboardButton(f'{i}', callback_data=f'date_{i}.{month}.{year}'))
+        month_2 = str(month).rjust(2, '0')
+        buttons_arr.append(types.InlineKeyboardButton(f'{i}', callback_data=f'date_{i}.{month_2}.{year}'))
         button_counter += 1
 
     while button_counter < 35:
@@ -46,22 +47,22 @@ def create_cal(year, month):
         button_counter += 1
 
     n_month = str((month + 1) % 12).rjust(2, '0')
-    if n_month == '0':
+    if n_month == '00':
         n_month = '12'
     n_year = str(year)
     if n_month == '01':
         n_year = str(year + 1)
 
     p_month = str((month - 1) % 12).rjust(2, '0')
-    if p_month == '0':
-        p_month = '12'
-    p_year = str(year)
     if p_month == '00':
-        p_month = '01'
+        p_month = '12'
         p_year = str(year - 1)
+    else:
+        p_year = str(year)
 
     markup_calendar.add(*buttons_arr)
     markup_calendar.add(types.InlineKeyboardButton('<--', callback_data=f'date_change_{p_year}_{p_month}'),
                         types.InlineKeyboardButton(f'{month_desc[str(month)]} {year}', callback_data='x'),
                         types.InlineKeyboardButton('-->', callback_data=f'date_change_{n_year}_{n_month}'))
+
     return markup_calendar
